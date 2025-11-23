@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { db } from '../../db'
 import { zodiacSigns } from '../../db/schema'
 import { eq } from 'drizzle-orm'
+import { getZodiacSign, ZodiacError } from '../../utils/zodiac'
 
 export const zodiacRouter = new Hono()
 
@@ -54,33 +55,31 @@ zodiacRouter.get('/name/:name', async (c) => {
 zodiacRouter.get('/date/:date', async (c) => {
   try {
     const dateStr = c.req.param('date') // Expected format: MM-DD
-    const signs = await db.select().from(zodiacSigns)
 
-    // Find matching zodiac sign based on date
-    const sign = signs.find((s) => {
-      const [month, day] = dateStr.split('-').map(Number)
-      const [startMonth, startDay] = s.startDate.split('-').map(Number)
-      const [endMonth, endDay] = s.endDate.split('-').map(Number)
-
-      // Handle year-wrap (Capricorn)
-      if (startMonth > endMonth) {
-        return (
-          (month === startMonth && day >= startDay) ||
-          (month > startMonth) ||
-          (month < endMonth) ||
-          (month === endMonth && day <= endDay)
-        )
+    // Validate and calculate zodiac sign using utility function
+    let zodiacSignName: string
+    try {
+      zodiacSignName = getZodiacSign(dateStr)
+    } catch (error) {
+      if (error instanceof ZodiacError) {
+        return c.json({ error: error.message }, 400)
       }
+      throw error
+    }
 
-      return (
-        (month === startMonth && day >= startDay) ||
-        (month > startMonth && month < endMonth) ||
-        (month === endMonth && day <= endDay)
-      )
-    })
+    // Fetch zodiac sign details from database
+    const [sign] = await db
+      .select()
+      .from(zodiacSigns)
+      .where(eq(zodiacSigns.name, zodiacSignName))
 
     if (!sign) {
-      return c.json({ error: 'Zodiac sign not found for date' }, 404)
+      return c.json(
+        {
+          error: `Zodiac sign '${zodiacSignName}' not found in database. Please ensure seed data is loaded.`
+        },
+        404
+      )
     }
 
     return c.json(sign)
