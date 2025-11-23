@@ -1,116 +1,241 @@
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  Zap,
-  Server,
-  Route as RouteIcon,
-  Shield,
-  Waves,
-  Sparkles,
-} from 'lucide-react'
+import { useState, FormEvent } from 'react'
+import { Sparkles, AlertCircle, Loader2 } from 'lucide-react'
+import ZodiacSignCard from '../components/ZodiacSignCard'
+import type { ZodiacSign } from '../db/schema'
 
 export const Route = createFileRoute('/')({ component: App })
 
 function App() {
-  const features = [
-    {
-      icon: <Zap className="w-12 h-12 text-cyan-400" />,
-      title: 'Powerful Server Functions',
-      description:
-        'Write server-side code that seamlessly integrates with your client components. Type-safe, secure, and simple.',
-    },
-    {
-      icon: <Server className="w-12 h-12 text-cyan-400" />,
-      title: 'Flexible Server Side Rendering',
-      description:
-        'Full-document SSR, streaming, and progressive enhancement out of the box. Control exactly what renders where.',
-    },
-    {
-      icon: <RouteIcon className="w-12 h-12 text-cyan-400" />,
-      title: 'API Routes',
-      description:
-        'Build type-safe API endpoints alongside your application. No separate backend needed.',
-    },
-    {
-      icon: <Shield className="w-12 h-12 text-cyan-400" />,
-      title: 'Strongly Typed Everything',
-      description:
-        'End-to-end type safety from server to client. Catch errors before they reach production.',
-    },
-    {
-      icon: <Waves className="w-12 h-12 text-cyan-400" />,
-      title: 'Full Streaming Support',
-      description:
-        'Stream data from server to client progressively. Perfect for AI applications and real-time updates.',
-    },
-    {
-      icon: <Sparkles className="w-12 h-12 text-cyan-400" />,
-      title: 'Next Generation Ready',
-      description:
-        'Built from the ground up for modern web applications. Deploy anywhere JavaScript runs.',
-    },
-  ]
+  const [day, setDay] = useState('')
+  const [month, setMonth] = useState('')
+  const [year, setYear] = useState('')
+  const [zodiacSign, setZodiacSign] = useState<ZodiacSign | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const validateDate = (d: string, m: string, y: string): boolean => {
+    const dayNum = parseInt(d)
+    const monthNum = parseInt(m)
+    const yearNum = parseInt(y)
+
+    // Check if inputs are valid numbers
+    if (isNaN(dayNum) || isNaN(monthNum) || isNaN(yearNum)) {
+      setError('Please enter valid numbers for day, month, and year')
+      return false
+    }
+
+    // Check ranges
+    if (monthNum < 1 || monthNum > 12) {
+      setError('Month must be between 1 and 12')
+      return false
+    }
+
+    if (dayNum < 1 || dayNum > 31) {
+      setError('Day must be between 1 and 31')
+      return false
+    }
+
+    if (yearNum < 1900 || yearNum > new Date().getFullYear()) {
+      setError(`Year must be between 1900 and ${new Date().getFullYear()}`)
+      return false
+    }
+
+    // Check if date is valid for the given month
+    const daysInMonth = new Date(yearNum, monthNum, 0).getDate()
+    if (dayNum > daysInMonth) {
+      setError(`Invalid day for the selected month (max ${daysInMonth} days)`)
+      return false
+    }
+
+    return true
+  }
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setZodiacSign(null)
+
+    // Validate input
+    if (!day || !month || !year) {
+      setError('Please fill in all fields')
+      return
+    }
+
+    if (!validateDate(day, month, year)) {
+      return
+    }
+
+    // Format date as MM-DD for API
+    const monthPadded = month.padStart(2, '0')
+    const dayPadded = day.padStart(2, '0')
+    const dateString = `${monthPadded}-${dayPadded}`
+
+    setLoading(true)
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/zodiac/date/${dateString}`)
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch zodiac sign')
+      }
+
+      const data = await response.json()
+      setZodiacSign(data)
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to determine zodiac sign. Please try again.'
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      <section className="relative py-20 px-6 text-center overflow-hidden">
+      <section className="relative py-12 md:py-20 px-6 text-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10"></div>
-        <div className="relative max-w-5xl mx-auto">
-          <div className="flex items-center justify-center gap-6 mb-6">
-            <img
-              src="/tanstack-circle-logo.png"
-              alt="TanStack Logo"
-              className="w-24 h-24 md:w-32 md:h-32"
-            />
-            <h1 className="text-6xl md:text-7xl font-black text-white [letter-spacing:-0.08em]">
-              <span className="text-gray-300">TANSTACK</span>{' '}
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                START
-              </span>
-            </h1>
-          </div>
-          <p className="text-2xl md:text-3xl text-gray-300 mb-4 font-light">
-            The framework for next generation AI applications
-          </p>
-          <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8">
-            Full-stack framework powered by TanStack Router for React and Solid.
-            Build modern applications with server functions, streaming, and type
-            safety.
-          </p>
-          <div className="flex flex-col items-center gap-4">
-            <a
-              href="https://tanstack.com/start"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50"
-            >
-              Documentation
-            </a>
-            <p className="text-gray-400 text-sm mt-2">
-              Begin your TanStack Start journey by editing{' '}
-              <code className="px-2 py-1 bg-slate-700 rounded text-cyan-400">
-                /src/routes/index.tsx
-              </code>
+        <div className="relative max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Sparkles className="w-10 h-10 md:w-12 md:h-12 text-cyan-400" />
+              <h1 className="text-4xl md:text-6xl font-black text-white">
+                <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                  mojhoroskop
+                </span>
+              </h1>
+            </div>
+            <p className="text-xl md:text-2xl text-gray-300 mb-2 font-light">
+              Discover Your Zodiac Sign
+            </p>
+            <p className="text-base md:text-lg text-gray-400 max-w-2xl mx-auto">
+              Enter your birth date to find out your zodiac sign and learn about
+              your astrological profile
             </p>
           </div>
+
+          {/* Birth Date Form */}
+          <form
+            onSubmit={handleSubmit}
+            className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 md:p-8 shadow-xl max-w-2xl mx-auto"
+          >
+            <h2 className="text-2xl font-semibold text-white mb-6 text-left">
+              Enter Your Birth Date
+            </h2>
+
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              {/* Month Input */}
+              <div>
+                <label
+                  htmlFor="month"
+                  className="block text-sm font-medium text-gray-300 mb-2 text-left"
+                >
+                  Month
+                </label>
+                <input
+                  id="month"
+                  type="number"
+                  min="1"
+                  max="12"
+                  placeholder="MM"
+                  value={month}
+                  onChange={(e) => setMonth(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                />
+              </div>
+
+              {/* Day Input */}
+              <div>
+                <label
+                  htmlFor="day"
+                  className="block text-sm font-medium text-gray-300 mb-2 text-left"
+                >
+                  Day
+                </label>
+                <input
+                  id="day"
+                  type="number"
+                  min="1"
+                  max="31"
+                  placeholder="DD"
+                  value={day}
+                  onChange={(e) => setDay(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                />
+              </div>
+
+              {/* Year Input */}
+              <div>
+                <label
+                  htmlFor="year"
+                  className="block text-sm font-medium text-gray-300 mb-2 text-left"
+                >
+                  Year
+                </label>
+                <input
+                  id="year"
+                  type="number"
+                  min="1900"
+                  max={new Date().getFullYear()}
+                  placeholder="YYYY"
+                  value={year}
+                  onChange={(e) => setYear(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-red-300 text-sm text-left">{error}</p>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full px-6 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Finding Your Sign...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5" />
+                  <span>Find My Zodiac Sign</span>
+                </>
+              )}
+            </button>
+          </form>
         </div>
       </section>
 
-      <section className="py-16 px-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-cyan-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10"
-            >
-              <div className="mb-4">{feature.icon}</div>
-              <h3 className="text-xl font-semibold text-white mb-3">
-                {feature.title}
-              </h3>
-              <p className="text-gray-400 leading-relaxed">
-                {feature.description}
-              </p>
-            </div>
-          ))}
+      {/* Zodiac Sign Result */}
+      {zodiacSign && (
+        <section className="py-12 px-6">
+          <div className="max-w-4xl mx-auto flex justify-center">
+            <ZodiacSignCard sign={zodiacSign} />
+          </div>
+        </section>
+      )}
+
+      {/* Footer Info */}
+      <section className="py-12 px-6 text-center">
+        <div className="max-w-2xl mx-auto">
+          <p className="text-gray-400 text-sm">
+            Your zodiac sign is determined by the position of the sun at the time
+            of your birth. Each sign has unique characteristics, strengths, and
+            traits that influence personality and compatibility.
+          </p>
         </div>
       </section>
     </div>
