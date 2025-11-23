@@ -4,9 +4,9 @@
 
 **Project Name:** mojhoroskop (My Horoscope)
 
-**Status:** New Project - Initial Setup Phase
+**Status:** Wave 1 Complete - Tech Stack Established
 
-**Description:** This appears to be a horoscope application project. The repository is currently in its initial setup phase.
+**Description:** A modern full-stack horoscope application combining accurate astronomical calculations with local-first architecture and real-time synchronization.
 
 ## Repository Structure
 
@@ -107,21 +107,49 @@ git pull origin <branch-name>
 
 ## Technology Stack
 
-**Status:** To Be Determined
+**Status:** ✅ Established (Wave 1 Complete)
 
-Common stacks for horoscope applications:
-- **Frontend:** React, Vue.js, or vanilla JavaScript
-- **Backend:** Node.js, Python (Flask/Django), or PHP
-- **Database:** PostgreSQL, MySQL, or MongoDB
-- **APIs:** RESTful or GraphQL
+### Frontend
+- **Framework:** TanStack Start (React 19.2.0)
+- **Router:** TanStack Router v1.132.0 (file-based, type-safe routing)
+- **Styling:** Tailwind CSS v4.0.6
+- **Package Manager:** Bun 1.3.2
 
-*This section will be updated once the tech stack is established.*
+### Backend
+- **API Framework:** Hono v4.10.6 (ultrafast web framework)
+- **Runtime:** Node.js v22 / Bun
+
+### Database & ORM
+- **Database:** PostgreSQL 16
+- **ORM:** Drizzle ORM v0.44.7
+- **Migrations:** Drizzle Kit v0.31.7
+
+### Local-First Sync
+- **Sync Layer:** ElectricSQL v1.1.5
+- **Architecture:** Offline-first with real-time synchronization
+
+### Astronomical Calculations
+- **Library:** Skyfield v1.53 (Python)
+- **Integration:** Python 3.11 via subprocess wrapper
+- **Capabilities:** Planetary positions, moon phases, birth charts, celestial events
+
+### Testing
+- **Framework:** Vitest v3.0.5
+- **Testing Library:** React Testing Library v16.2.0
+
+### Development Tools
+- **TypeScript:** v5.7.2
+- **Build Tool:** Vite v7.1.7
+- **Containerization:** Docker & Docker Compose
 
 ## Development Setup
 
 ### Prerequisites
 
-*To be documented once project dependencies are defined*
+- Bun >= 1.0 (https://bun.sh/)
+- PostgreSQL >= 16
+- Python >= 3.11
+- Docker (optional, for local database)
 
 ### Installation
 
@@ -130,32 +158,68 @@ Common stacks for horoscope applications:
 git clone <repository-url>
 cd mojhoroskop
 
-# Install dependencies (example - adjust based on actual stack)
-npm install
-# or
-pip install -r requirements.txt
+# Install JavaScript/TypeScript dependencies
+bun install
+
+# Install Python dependencies
+pip3 install skyfield
+
+# Copy environment variables
+cp .env.example .env
+# Edit .env with your configuration
+
+# Start database (Docker)
+docker-compose up -d
+
+# Run database migrations
+bun run db:push
+
+# Seed the database
+bun run db:seed
 ```
 
 ### Running the Application
 
-*To be documented once the application is developed*
-
 ```bash
-# Development mode (example)
-npm run dev
-# or
-python manage.py runserver
+# Start the frontend (TanStack Start)
+bun run dev
+# Available at http://localhost:3000
+
+# Start the API server (in a separate terminal)
+bun run api:dev
+# Available at http://localhost:3001
 ```
 
 ### Running Tests
 
-*To be documented once tests are implemented*
+```bash
+# Run all tests
+bun run test
+
+# Run tests in watch mode
+bun test --watch
+
+# Run tests with coverage
+bun test --coverage
+```
+
+### Database Management
 
 ```bash
-# Example commands
-npm test
-# or
-pytest
+# Generate migration files
+bun run db:generate
+
+# Push schema changes to database
+bun run db:push
+
+# Run migrations
+bun run db:migrate
+
+# Open Drizzle Studio (database GUI)
+bun run db:studio
+
+# Seed database with zodiac signs
+bun run db:seed
 ```
 
 ## Key Features (Planned)

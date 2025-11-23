@@ -1,0 +1,25 @@
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
+import * as schema from './schema'
+
+// Database connection configuration
+const connectionString = process.env.DATABASE_URL ||
+  `postgresql://${process.env.DB_USER || 'postgres'}:${process.env.DB_PASSWORD || 'postgres'}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || '5432'}/${process.env.DB_NAME || 'mojhoroskop'}`
+
+// Create postgres connection
+export const connection = postgres(connectionString, {
+  max: 10,
+  idle_timeout: 20,
+  connect_timeout: 10,
+})
+
+// Create drizzle instance
+export const db = drizzle(connection, { schema })
+
+// Export schema for use in queries
+export { schema }
+
+// Helper function to close the database connection
+export async function closeDatabase() {
+  await connection.end()
+}
